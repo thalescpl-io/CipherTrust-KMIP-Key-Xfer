@@ -65,9 +65,11 @@ with c:
 	)	
 	print(keylist)
 	
-	for k in keylist:
-		attriby = c.get_attributes(k)
-		print("\nKeyID: ", k)
+	for keyID in keylist:
+		attriby = c.get_attributes(keyID)
+		print("\nkeyID: ", keyID)
+		kkey = c.get(keyID)
+		print("KEY: ", kkey)
 		for a in attriby[1]:
 			print(a.attribute_name, ": ", a.attribute_value)
 	
