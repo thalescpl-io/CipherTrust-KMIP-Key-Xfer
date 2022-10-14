@@ -34,41 +34,31 @@ c = client.ProxyKmipClient(
 
 # You need an attkibutes class defined for later use
 f = attributes.AttributeFactory()
-
-# Code for creating a key and writing it to the KMIP Server
-
-# Creates New Symmetric Key on KMIP Server
-#with c:
-#	key_id = c.create(
-#    	enums.CryptographicAlgorithm.AES,
-#        256,
-#        operation_policy_name='default',
-#        name='Test_256_AES_Symmetric_Key',
-#        cryptographic_usage_mask=[
-#            enums.CryptographicUsageMask.ENCRYPT,
-#            enums.CryptographicUsageMask.DECRYPT
-#        ]
-#    )
-#	print("Witten - Key ID:", key_id)
-
-# Code for reading keys and associated attributes for user from KMIP server
-
-with c:
-	keylist = c.locate(
-		attributes=[
-			f.create_attribute(
+keyAttribs = f.create_attribute(
 				enums.AttributeType.OBJECT_TYPE,
 				enums.ObjectType.SYMMETRIC_KEY
 			)
-		]
-	)	
-	print(keylist)
+
+# Code for locating (READING) keys and associated attributes for user from KMIP server. It limits its search to those
+# attributes defined by the create_attributes object.
+# This call initiates connection with KMIP server
+with c:
+	listOfKeys = c.locate(attributes=[keyAttribs])	
+
+# The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-valuye pairs 
+# consisting of attribute_name, attribute_index, attribute_value, and attribute_value.  You can print(a) below to see a complete 
+# list of this information (keys and values)
+
+	print("\nNumber of Keys: ", len(listOfKeys), "\n")
 	
-	for keyID in keylist:
+	for keyID in listOfKeys:
+		keyValue = c.get(keyID)
+		convert_string_to_int = int(str(keyValue)[2:-1], base=16)
+		convert_hex = hex(convert_string_to_int)
+		print("\nkeyID: ", keyID, "\nKEY Value (hex): ", convert_hex )
 		attriby = c.get_attributes(keyID)
-		print("\nkeyID: ", keyID)
-		kkey = c.get(keyID)
-		print("KEY: ", kkey)
+		idx = 0
 		for a in attriby[1]:
-			print(a.attribute_name, ": ", a.attribute_value)
+			print("Idx: ", idx, a.attribute_name, ": ", a.attribute_value)
+			idx = idx + 1
 	
