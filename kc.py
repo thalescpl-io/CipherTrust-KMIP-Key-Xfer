@@ -8,33 +8,32 @@
 
 import os.path, pkgutil
 import ssl
-# import kmip.pie
-# import kmip
 from kmip.pie.client import ProxyKmipClient, enums
 from kmip.pie import objects
 from kmip.pie import client
 from kmip import enums
 from kmip.core.factories import attributes
 
+# Specify KMIP Server and attributes
+c = client.ProxyKmipClient(
+	hostname='192.168.1.184',
+	port='5696',
+	cert='kmipclient.crt',
+	key='kmipclient.key',
+	ca='TrustedCAs.pem',
+#	cert_reqs=ssl.CERT_OPTIONAL, # no longer supported although you may see this in the default pykmip.conf file, if used.
+	ssl_version="PROTOCOL_TLSv1_2",
+	username='kmip_user',
+	password='Guardium123!',
+    config='client',
+    config_file='pykmip.conf'	
+)
 
-# Identifies KMIP Server.  Uses pykmip.conf file from default directory
-c = client.ProxyKmipClient()
+# Alternative method for specifying KMIP Server.  Uses pykmip.conf file from default location.
+#c = client.ProxyKmipClient()
+
+# You need an attkibutes class defined for later use
 f = attributes.AttributeFactory()
-
-# Alternative method for specifying configuration
-#c = client.ProxyKmipClient(
-#	hostname='192.168.1.184',
-#	port='5696',
-#	cert='kmipclient.crt',
-#	key='kmipclient.key',
-#	ca='TrustedCAs.pem',
-##	cert_reqs=ssl.CERT_OPTIONAL,
-##	ssl_version=ssl.PROTOCOL_TLSv1_2,
-#	username='kmip_user',
-#	password='Guardium123!',
-#    config='client',
-#    config_file='pykmip.conf'	
-#)
 
 # Code for creating a key and writing it to the KMIP Server
 
