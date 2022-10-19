@@ -14,6 +14,7 @@ from kmip.pie import client
 from kmip import enums
 from kmip.core.factories import attributes
 
+
 # Specify key source KMIP Server and attributes
 keySource =	client.ProxyKmipClient(
 			hostname='192.168.1.184',
@@ -46,37 +47,96 @@ keyDest =	client.ProxyKmipClient(
 # Alternative method for specifying KMIP Server.  Uses pykmip.conf file from default location.
 #c = client.ProxyKmipClient()
 
-# You need an attkibutes class defined for later use
+# You need an attributes class defined for later use - location of existing keys
 f = attributes.AttributeFactory()
-keyAttribs = f.create_attribute(
-				enums.AttributeType.OBJECT_TYPE,
-				enums.ObjectType.SYMMETRIC_KEY
-			)
 
-name_index = 0	# To be confirmed below
+keyAttribs = f.create_attribute(
+	enums.AttributeType.OBJECT_TYPE,
+	enums.ObjectType.SYMMETRIC_KEY
+	)
+
+name_index 		= 0		# To be confirmed below
+keyIdx 			= 0
+keyAttribIdx 	= 0
+keyCount		= 0
+keyValueSrc 	= []	# list of keys
+keyAttribSrc 	= []	# list of key attributes
+listOfSrcKeys	= []
+keyValueDst 	= []	# list of keys
+
+keyAttribDst 	= []	# list of key attributes
+
+listOfDstKeys	= []
 
 # Code for locating (READING) keys and associated attributes for user from KMIP server. It limits its search to those
 # attributes defined by the create_attributes object.
 # This call initiates connection with KMIP server
 with keySource:
-	listOfKeys = keySource.locate(attributes=[keyAttribs])	
+	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])	
 
 # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-valuye pairs 
 # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.  You can print(a) below to see a complete 
 # list of this information (keys and values)
 
-	print("\nNumber of Keys: ", len(listOfKeys), "\n")
+	keyCount = len(listOfSrcKeys)
+	print("\nNumber of Src Keys: ", keyCount, "\n")
 	
-	for keyID in listOfKeys:
-		keyValue = keySource.get(keyID)
-		convert_string_to_int = int(str(keyValue)[2:-1], base=16)
-		convert_hex = hex(convert_string_to_int)
-		print("\nkeyID: ", keyID, "\nKEY Value (hex): ", convert_hex )
-		attriby = keySource.get_attributes(keyID)
-		idx = 0
-		for a in attriby[1]:
-			print("Idx: ", idx, a.attribute_name, ": ", a.attribute_value)
-			if(str(a.attribute_name) == 'Name'):
-				name_index = idx	#finds index of Name and remembers it for later use.
-			idx = idx + 1
+	for keySrcID in listOfSrcKeys:
+		keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
+		keyValueDst.insert(keyIdx, keyValueSrc[keyIdx]) 	# make a copy
 
+		keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
+		keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])	# make a copy
+		
+		print("\nkeyIdx: ", keyIdx, "\keySrcID: ", keySrcID, "keyValueSrc[keyIdx]: ", keyValueSrc[keyIdx])
+		
+		keyAttribIdx = 0
+		for a in keyAttribSrc[keyIdx][1]:
+			print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
+			keyAttribIdx = keyAttribIdx + 1
+		
+		keyIdx = keyIdx + 1
+
+# The following duplication contains everything EXCEPT the keyID (which needs to be different)
+# keyAttribDst = keyAttribSrc
+
+print("\n ---- key copying ---- ")
+
+
+
+with keyDest:
+	keyIdx = 0	#reset key index
+	
+	while (keyIdx < keyCount):
+		keyAttribIdx = 0
+		
+		print("\n keyID: ", keyAttribDst[keyIdx][0] )
+		
+		for d in keyAttribDst[keyIdx][1]:
+			if(str(d.attribute_name) == 'Name'):
+				d.attribute_value = str(d.attribute_value) + "_V2"
+			elif(str(d.attribute_name) == 'Cryptographic Usage Mask'):
+				pass
+			elif(str(d.attribute_name) == 'Cryptographic Length'):
+				pass
+			elif(str(d.attribute_name) == 'Cryptographic Algorithm'):
+				pass
+			elif(str(d.attribute_name) == 'State'):
+				pass
+			elif(str(d.attribute_name) == 'Operation Policy Name'):
+				pass
+			elif(str(d.attribute_name) == 'Object Type'):
+				pass
+			else:
+				d.attribute_value = None
+				# keyAttribDst[keyIdx][1].remove(d)
+
+			print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, d.attribute_name, ": ", d.attribute_value)
+			
+			keyAttribIdx = keyAttribIdx + 1
+
+		keyIdx = keyIdx + 1
+		
+
+print("\n keyAttribSrc: ", keyAttribSrc)
+print("\n\n keyAttribDst: ", keyAttribDst)
