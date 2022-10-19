@@ -49,7 +49,6 @@ keyDest =	client.ProxyKmipClient(
 
 # You need an attributes class defined for later use - location of existing keys
 f = attributes.AttributeFactory()
-
 keyAttribs = f.create_attribute(
 	enums.AttributeType.OBJECT_TYPE,
 	enums.ObjectType.SYMMETRIC_KEY
@@ -63,9 +62,7 @@ keyValueSrc 	= []	# list of keys
 keyAttribSrc 	= []	# list of key attributes
 listOfSrcKeys	= []
 keyValueDst 	= []	# list of keys
-
 keyAttribDst 	= []	# list of key attributes
-
 listOfDstKeys	= []
 
 # Code for locating (READING) keys and associated attributes for user from KMIP server. It limits its search to those
@@ -103,9 +100,9 @@ with keySource:
 print("\n ---- key copying ---- ")
 
 
-
 with keyDest:
 	keyIdx = 0	#reset key index
+
 	
 	while (keyIdx < keyCount):
 		keyAttribIdx = 0
@@ -115,7 +112,9 @@ with keyDest:
 		for d in keyAttribDst[keyIdx][1]:
 			if(str(d.attribute_name) == 'Name'):
 				d.attribute_value = str(d.attribute_value) + "_V2"
+				C_Name = d.attribute_value
 			elif(str(d.attribute_name) == 'Cryptographic Usage Mask'):
+				C_UsageMask = (enums.CryptographicUsageMask.ENCRYPT, enums.CryptographicUsageMask.DECRYPT)
 				pass
 			elif(str(d.attribute_name) == 'Cryptographic Length'):
 				pass
@@ -135,8 +134,20 @@ with keyDest:
 			
 			keyAttribIdx = keyAttribIdx + 1
 
+# now push the keys to the destination KMIP key server
+
+		tmpStr = str(keyValueDst[keyIdx])
+		hexKey = bytes.fromhex(tmpStr[2:-1])
+		
+		symmetric_key = objects.SymmetricKey(
+			enums.CryptographicAlgorithm.AES,
+			256,
+			hexKey,
+			C_UsageMask,
+			C_Name
+		)
+		kid = keyDest.register(symmetric_key)
+			
 		keyIdx = keyIdx + 1
 		
 
-print("\n keyAttribSrc: ", keyAttribSrc)
-print("\n\n keyAttribDst: ", keyAttribDst)
