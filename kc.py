@@ -114,8 +114,20 @@ with keyDest:
 				d.attribute_value = str(d.attribute_value) + "_V2"
 				C_Name = d.attribute_value
 			elif(str(d.attribute_name) == 'Cryptographic Usage Mask'):
-				C_UsageMask = (enums.CryptographicUsageMask.ENCRYPT, enums.CryptographicUsageMask.DECRYPT)
-				pass
+		
+		# Magic method for deconstructing usage mask...
+				L_UsageMask = []
+				bitLen = len(enums.CryptographicUsageMask)
+				m_bit = 2**(bitLen)
+				for bb in range(bitLen):
+					bit_test = m_bit & d.attribute_value.value
+					if (bit_test > 0):
+						print(bb, bit_test)
+						print(enums.CryptographicUsageMask(bit_test))
+						L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
+						C_UsageMask = tuple(L_UsageMask)
+					m_bit = m_bit >> 1
+			
 			elif(str(d.attribute_name) == 'Cryptographic Length'):
 				pass
 			elif(str(d.attribute_name) == 'Cryptographic Algorithm'):
@@ -146,7 +158,7 @@ with keyDest:
 			C_UsageMask,
 			C_Name
 		)
-		kid = keyDest.register(symmetric_key)
+		# kid = keyDest.register(symmetric_key)
 			
 		keyIdx = keyIdx + 1
 		
