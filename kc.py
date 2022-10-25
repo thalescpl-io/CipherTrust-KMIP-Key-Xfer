@@ -24,11 +24,14 @@ keySource =	client.ProxyKmipClient(
 			ca='TrustedCAs.pem',
 #			cert_reqs=ssl.CERT_OPTIONAL, # no longer supported although you may see this in the default pykmip.conf file, if used.
 			ssl_version="PROTOCOL_TLSv1_2",
-			username='kmip_user',
-			password='Guardium123!',
+			username='kmip_alice',
+			password='Thales123!',
+#			username='admin',
+#			password='em50-UAV2000',	
     		config='client',
     		config_file='pykmip.conf'	
 )
+
 
 # Specify key destination KMIP Server and attributes - in this case it would be the same
 keyDest =	client.ProxyKmipClient(
@@ -39,8 +42,8 @@ keyDest =	client.ProxyKmipClient(
 			ca='TrustedCAs.pem',
 #			cert_reqs=ssl.CERT_OPTIONAL, # no longer supported although you may see this in the default pykmip.conf file, if used.
 			ssl_version="PROTOCOL_TLSv1_2",
-			username='kmip_user',
-			password='Guardium123!',
+			username='kmip_bob',
+			password='Thales234!',
     		config='client',
     		config_file='pykmip.conf'	
 )
@@ -73,54 +76,64 @@ print("\n ---- Copy Keys from Source Key Server ---- ")
 
 with keySource:
 	keyIdx = 0	#reset key index
-	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])	
+#	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
+	listOfSrcKeys = keySource.locate()
 
-# The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-valuye pairs 
-# consisting of attribute_name, attribute_index, attribute_value, and attribute_value.  You can print(a) below to see a complete 
-# list of this information (keys and values)
+# The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-value pairs 
+# consisting of attribute_name, attribute_index, attribute_value, and attribute_value.  
 
 	keyCount = len(listOfSrcKeys)
-	print("\nNumber of Src Keys: ", keyCount, "\n")
+	print("\nNumber of Src Keys: ", keyCount)
 	
 	for keySrcID in listOfSrcKeys:
-		keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
-		keyValueDst.insert(keyIdx, keyValueSrc[keyIdx]) 	# make a copy
+		try:
+			keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
+			keyValueDst.insert(keyIdx, keyValueSrc[keyIdx]) 	# make a copy
 
-		keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
-		keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])	# make a copy
-		
-		print("\nkeyIdx: ", keyIdx, "\n  keySrcID: ", keySrcID, "\n  keyValueSrc[keyIdx]: ", keyValueSrc[keyIdx])
-		
-		keyAttribIdx = 0
-		for a in keyAttribSrc[keyIdx][1]:
-			print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
-			keyAttribIdx = keyAttribIdx + 1
-		
-		keyIdx = keyIdx + 1
+			keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
+			keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])	# make a copy
+
+			tmpStr = str(keyValueSrc[keyIdx])
+			hexKey = hex(int("0x"+tmpStr[2:-1], 0))
+			
+			print("\nkeyIdx: ", keyIdx, "\n  keySrcID: ", keySrcID, "\n  keyValueSrc[keyIdx]: ", hexKey)
+
+
+			keyAttribIdx = 0
+			for a in keyAttribSrc[keyIdx][1]:
+				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
+				keyAttribIdx = keyAttribIdx + 1
+				
+			keyIdx = keyIdx + 1
+			
+		except:
+			print("\n KeySrcID: ", keySrcID, "\n  KEY READ ERROR - Value and Atribute")
 
 
 # Now make copies of the keys on the destination key server
-
 print("\n ---- Copy Keys to Destination Key Server ---- ")
 
 with keyDest:
+	keyCount = keyIdx
 	keyIdx = 0	#reset key index
+	print("\nNumber of Dst Keys: ", keyCount)	
 
 	while (keyIdx < keyCount):
 		keyAttribIdx = 0
 		
-		print("\n keyID: ", keyAttribDst[keyIdx][0] )
+		print("\nkeyIdx: ", keyIdx,"\n keyID: ", keyAttribDst[keyIdx][0] )
 		
 		for d in keyAttribDst[keyIdx][1]:
 			if(str(d.attribute_name) == 'Name'):
 				d.attribute_value = str(d.attribute_value) + "_V2"
 				C_Name = d.attribute_value
+				print(" C_Name: :", C_Name)
 			elif(str(d.attribute_name) == 'Cryptographic Usage Mask'):
 		
 			# Magic method for deconstructing usage mask...
 				L_UsageMask = []
 			
-			# Determin the length of the numeration for all possible usage masks and
+			# Determine the length of the numeration for all possible usage masks and
 			# then create a value with a ONE in the MSB (everything else are ZEROs).
 			# This value is called m_bit.  Once it is created, apply it to the mask attribute value using AND)
 			# and determine if a bit is present in each of the positions of the mask, right-shift bit,
@@ -128,6 +141,7 @@ with keyDest:
 			# usage mask to the variable L_UsageMask.  Once you have iterated across all bit positions in the mask, 
 			# then convert the list of cryptographic usage methods (L_UsageMask) to a tuple for association
 			# with the key.  Whew!
+			
 				bitLen = len(enums.CryptographicUsageMask)
 				m_bit = 2**(bitLen)
 				for bb in range(bitLen):
@@ -136,7 +150,6 @@ with keyDest:
 						L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
 					m_bit = m_bit >> 1
 				C_UsageMask = tuple(L_UsageMask)
-				print("C_UsageMask: ", C_UsageMask)
 			
 			elif(str(d.attribute_name) == 'Cryptographic Length'):
 				pass
@@ -150,7 +163,7 @@ with keyDest:
 				pass
 			else:
 				d.attribute_value = None
-			
+	
 			keyAttribIdx = keyAttribIdx + 1
 
 # now push the keys to the destination KMIP key server
@@ -170,38 +183,46 @@ with keyDest:
 		try:
 			kid = keyDest.register(symmetric_key)
 			keyDest.activate(kid)
-			break
-		except ValueError:
-			print(" Value Error")
+
+		except:
+			print(" ... Key Registration and Activation Error - Check to ensure key does not already exist")
 			
 		keyIdx = keyIdx + 1
 		
 print("\n ---- key check  ---- ")
 
-with keySource:
+with keyDest:
 	keyIdx = 0	#reset key index
-	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])	
+#	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
+	listOfDstKeys = keyDest.locate()		
 
 # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-valuye pairs 
 # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.  You can print(a) below to see a complete 
 # list of this information (keys and values)
 
-	keyCount = len(listOfSrcKeys)
-	print("\nNumber of Src Keys: ", keyCount, "\n")
+	keyCount = len(listOfDstKeys)
+	print("\nNumber of Destination Keys: ", keyCount)
 	
-	for keySrcID in listOfSrcKeys:
-		keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
+	for keyDstID in listOfDstKeys:
+		try:
+			keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
 
-		keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
-		
-		print("\nkeyIdx: ", keyIdx, "\  nkeySrcID: ", keySrcID, "\n  keyValueSrc[keyIdx]: ", keyValueSrc[keyIdx])
-		
-		keyAttribIdx = 0
-		for a in keyAttribSrc[keyIdx][1]:
-			print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
-			keyAttribIdx = keyAttribIdx + 1
-		
-		keyIdx = keyIdx + 1
+			keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID))
+			
+			tmpStr = str(keyValueDst[keyIdx])
+			hexKey = hex(int("0x"+tmpStr[2:-1], 0))
+			
+			print("\nkeyIdx: ", keyIdx, "\n  keyDstID: ", keyDstID, "\n  keyValueDst[keyIdx]: ", hexKey)
+
+			keyAttribIdx = 0
+			for a in keyAttribDst[keyIdx][1]:
+				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
+				keyAttribIdx = keyAttribIdx + 1
+				
+			keyIdx = keyIdx + 1
+			
+		except:
+			print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
 		
 print("\n --- END --- ")
 
