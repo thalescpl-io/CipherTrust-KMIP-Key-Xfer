@@ -13,7 +13,23 @@ from kmip.pie import objects
 from kmip.pie import client
 from kmip import enums
 from kmip.core.factories import attributes
+import binascii
+import codecs
 
+
+# ---------------- Functions -------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------
+def makeHexStr(t_val):
+#-----------------------------------------------------------------------------------------------
+	
+	tmpStr = str(t_val)
+	t_hexStr = hex(int("0x"+tmpStr[2:-1], 0))
+
+	return t_hexStr
+
+
+# ---------------- End of Functions -------------------------------------------------------------
 
 # Specify key source KMIP Server and attributes
 keySource =	client.ProxyKmipClient(
@@ -59,7 +75,7 @@ keyAttribs = f.create_attribute(
 
 name_index 		= 0		# To be confirmed below
 keyIdx 			= 0
-keyAttribIdx 	= 0
+keyAttribIdx	= 0
 keyCount		= 0
 keyValueSrc 	= []	# list of keys
 keyAttribSrc 	= []	# list of key attributes
@@ -93,11 +109,9 @@ with keySource:
 			keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
 			keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])	# make a copy
 
-			tmpStr = str(keyValueSrc[keyIdx])
-			hexKey = hex(int("0x"+tmpStr[2:-1], 0))
+			hexKey = makeHexStr(keyValueSrc[keyIdx])
 			
 			print("\nkeyIdx: ", keyIdx, "\n  keySrcID: ", keySrcID, "\n  keyValueSrc[keyIdx]: ", hexKey)
-
 
 			keyAttribIdx = 0
 			for a in keyAttribSrc[keyIdx][1]:
