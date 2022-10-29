@@ -15,7 +15,7 @@ from kmip import enums
 from kmip.core.factories import attributes
 import binascii
 import codecs
-
+import hashlib
 
 # ---------------- Functions -------------------------------------------------------------------
 
@@ -115,7 +115,14 @@ with keySource:
 
 			keyAttribIdx = 0
 			for a in keyAttribSrc[keyIdx][1]:
-				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
+				
+				#Get a more readable format of the digest
+				if(str(a.attribute_name) == 'Digest'):
+					a_value = a.attribute_value.digest_value.value.hex()
+				else:
+					a_value = a.attribute_value
+					
+				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a_value)
 				keyAttribIdx = keyAttribIdx + 1
 				
 			keyIdx = keyIdx + 1
@@ -218,7 +225,7 @@ with keyDest:
 	print("\nNumber of Destination Keys: ", keyCount)
 	
 	for keyDstID in listOfDstKeys:
-		try:
+		# try:
 			keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
 
 			keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID))
@@ -230,13 +237,20 @@ with keyDest:
 
 			keyAttribIdx = 0
 			for a in keyAttribDst[keyIdx][1]:
-				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a.attribute_value)
+				
+				#Get a more readable format of the digest
+				if(str(a.attribute_name) == 'Digest'):
+					a_value = a.attribute_value.digest_value.value.hex()
+				else:
+					a_value = a.attribute_value
+					
+				print("keyIdx: ", keyIdx, "keyAttribIdx: ", keyAttribIdx, a.attribute_name, ": ", a_value)
 				keyAttribIdx = keyAttribIdx + 1
 				
 			keyIdx = keyIdx + 1
 			
-		except:
-			print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
+		#except:
+			#print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
 		
 print("\n --- END --- ")
 
