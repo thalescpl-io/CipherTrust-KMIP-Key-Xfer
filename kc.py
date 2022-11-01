@@ -32,46 +32,56 @@ def makeHexStr(t_val):
 
 # ---------------- End of Functions -------------------------------------------------------------
 
-DEFAULT_KMIP_PORT = ['5696']    # must be a list
+DEFAULT_KMIP_PORT = ["5696"]  # must be a list
 
 # ----- Input Parsing ---------------------------------------------------------------------------
 
-# Parse command.  Note that if the arguments are not complete, a usage message will be printed 
+# Parse command.  Note that if the arguments are not complete, a usage message will be printed
 # automatically
-parser = argparse.ArgumentParser(prog = 'kc.py', description = 'KMIP Transfer Utility')
+parser = argparse.ArgumentParser(prog="kc.py", description="KMIP Transfer Utility")
 
 # Source Information
-parser.add_argument('-srcHost', nargs=1, action='store', dest='srcHost', required=True)
-parser.add_argument('-srcPort', nargs=1, action='store', dest='srcPort', default=DEFAULT_KMIP_PORT)
-parser.add_argument('-srcUser', nargs=1, action='store', dest='srcUser', required=True)
-parser.add_argument('-srcPass', nargs=1, action='store', dest='srcPass', required=True)
+parser.add_argument("-srcHost", nargs=1, action="store", dest="srcHost", required=True)
+parser.add_argument(
+    "-srcPort", nargs=1, action="store", dest="srcPort", default=DEFAULT_KMIP_PORT
+)
+parser.add_argument("-srcUser", nargs=1, action="store", dest="srcUser", required=True)
+parser.add_argument("-srcPass", nargs=1, action="store", dest="srcPass", required=True)
 
 # Destination Information
-parser.add_argument('-dstHost', nargs=1, action='store', dest='dstHost', required=True)
-parser.add_argument('-dstPort', nargs=1, action='store', dest='dstPort', default=DEFAULT_KMIP_PORT)
-parser.add_argument('-dstUser', nargs=1, action='store', dest='dstUser', required=True)
-parser.add_argument('-dstPass', nargs=1, action='store', dest='dstPass', required=True)
+parser.add_argument("-dstHost", nargs=1, action="store", dest="dstHost", required=True)
+parser.add_argument(
+    "-dstPort", nargs=1, action="store", dest="dstPort", default=DEFAULT_KMIP_PORT
+)
+parser.add_argument("-dstUser", nargs=1, action="store", dest="dstUser", required=True)
+parser.add_argument("-dstPass", nargs=1, action="store", dest="dstPass", required=True)
 
-#Client Certificate Information
-parser.add_argument('-clientCert', nargs=1, action='store', dest='clientCert', required=True)
-parser.add_argument('-clientKey', nargs=1, action='store', dest='clientKey', required=True)
-parser.add_argument('-trustedCAs', nargs=1, action='store', dest='trustedCAs', required=True)
+# Client Certificate Information
+parser.add_argument(
+    "-clientCert", nargs=1, action="store", dest="clientCert", required=True
+)
+parser.add_argument(
+    "-clientKey", nargs=1, action="store", dest="clientKey", required=True
+)
+parser.add_argument(
+    "-trustedCAs", nargs=1, action="store", dest="trustedCAs", required=True
+)
 
 args = parser.parse_args()
 
-t_srcHost = str(' '.join(args.srcHost))
-t_srcPort = str(' '.join(args.srcPort))
-t_srcUser = str(' '.join(args.srcUser))
-t_srcPass = str(' '.join(args.srcPass))
+t_srcHost = str(" ".join(args.srcHost))
+t_srcPort = str(" ".join(args.srcPort))
+t_srcUser = str(" ".join(args.srcUser))
+t_srcPass = str(" ".join(args.srcPass))
 
-t_dstHost = str(' '.join(args.dstHost))
-t_dstPort = str(' '.join(args.dstPort))
-t_dstUser = str(' '.join(args.dstUser))
-t_dstPass = str(' '.join(args.dstPass))
+t_dstHost = str(" ".join(args.dstHost))
+t_dstPort = str(" ".join(args.dstPort))
+t_dstUser = str(" ".join(args.dstUser))
+t_dstPass = str(" ".join(args.dstPass))
 
-t_clientCert = str(' '.join(args.clientCert))
-t_clientKey = str(' '.join(args.clientKey))
-t_trustedCAs = str(' '.join(args.trustedCAs))
+t_clientCert = str(" ".join(args.clientCert))
+t_clientKey = str(" ".join(args.clientKey))
+t_trustedCAs = str(" ".join(args.trustedCAs))
 
 print("\n ---- INPUT STATS: ----")
 print("Source: ", t_srcHost, t_srcPort, t_srcUser)
