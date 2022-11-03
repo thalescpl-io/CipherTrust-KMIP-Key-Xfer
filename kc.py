@@ -146,156 +146,199 @@ listOfDstKeys = []
 
 print("\n ---- Copy Keys from Source Key Server ---- ")
 
-with keySource:
-    keyIdx = 0  # reset key index
-    
-    try:
-        # 	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
-        listOfSrcKeys = keySource.locate()
-        
-    except IOError as e:
-        print("\n *** Source IO Error *** \n")
-        print(e)
-        exit()
-        
-    except ValueError as e:
-        print("\n *** Source Value Error *** \n")
-        print(e)
-        exit()
-        
-    except EOFError as e:
-        print("\n *** Source EOF Error *** ->  Is host available? \n")
-        print(e)
-        exit()
-        
-    except:
-        print("\n *** Unknown Error with Source *** \n")
-        # exit()        
+try:
+    with keySource:
+        keyIdx = 0  # reset key index
 
-    # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-value pairs
-    # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
-
-    keyCount = len(listOfSrcKeys)
-    print("\nNumber of Src Keys: ", keyCount)
-
-    for keySrcID in listOfSrcKeys:
         try:
-            keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
-            keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
+            # 	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
+            listOfSrcKeys = keySource.locate()
 
-            keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
-            keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
+        except IOError as e:
+            print("\n *** Source IO Error *** \n")
+            print(e)
+            exit()
 
-            hexKey = makeHexStr(keyValueSrc[keyIdx])
+        except ValueError as e:
+            print("\n *** Source Value Error *** \n")
+            print(e)
+            exit()
 
-            print(
-                "\nkeyIdx: ",
-                keyIdx,
-                "\n  keySrcID: ",
-                keySrcID,
-                "\n  keyValueSrc[keyIdx]: ",
-                hexKey,
-            )
-
-            keyAttribIdx = 0
-            for a in keyAttribSrc[keyIdx][1]:
-
-                # Get a more readable format of the digest
-                if str(a.attribute_name) == "Digest":
-                    a_value = a.attribute_value.digest_value.value.hex()
-                else:
-                    a_value = a.attribute_value
-
-                print(
-                    "keyIdx: ",
-                    keyIdx,
-                    "keyAttribIdx: ",
-                    keyAttribIdx,
-                    a.attribute_name,
-                    ": ",
-                    a_value,
-                )
-                keyAttribIdx = keyAttribIdx + 1
-
-            keyIdx = keyIdx + 1
+        except EOFError as e:
+            print("\n *** Source EOF Error *** ->  Is host available? \n")
+            print(e)
+            exit()
 
         except:
-            print("\n KeySrcID: ", keySrcID, "\n  KEY READ ERROR - Value and Atribute")
+            print("\n *** Unknown Error with Source *** \n")
+            # exit()        
 
+        # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-value pairs
+        # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
+
+        keyCount = len(listOfSrcKeys)
+        print("\nNumber of Src Keys: ", keyCount)
+
+        for keySrcID in listOfSrcKeys:
+            try:
+                keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
+                keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
+
+                keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
+                keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
+
+                hexKey = makeHexStr(keyValueSrc[keyIdx])
+
+                print(
+                    "\nkeyIdx: ",
+                    keyIdx,
+                    "\n  keySrcID: ",
+                    keySrcID,
+                    "\n  keyValueSrc[keyIdx]: ",
+                    hexKey,
+                )
+
+                keyAttribIdx = 0
+                for a in keyAttribSrc[keyIdx][1]:
+
+                    # Get a more readable format of the digest
+                    if str(a.attribute_name) == "Digest":
+                        a_value = a.attribute_value.digest_value.value.hex()
+                    else:
+                        a_value = a.attribute_value
+
+                    print(
+                        "keyIdx: ",
+                        keyIdx,
+                        "keyAttribIdx: ",
+                        keyAttribIdx,
+                        a.attribute_name,
+                        ": ",
+                        a_value,
+                    )
+                    keyAttribIdx = keyAttribIdx + 1
+
+                keyIdx = keyIdx + 1
+
+            except:
+                print("\n KeySrcID: ", keySrcID, "\n  KEY READ ERROR - Value and Atribute")
+
+except:
+    print("\n *** SOURCE SERVER NOT READY ***")
+    exit()
 
 # Now make copies of the keys on the destination key server
 print("\n ---- Copy Keys to Destination Key Server ---- ")
 
-with keyDest:
-    keyCount = keyIdx
-    keyIdx = 0  # reset key index
-    print("\nNumber of Dst Keys: ", keyCount)
+try:
+    with keyDest:
+        keyCount = keyIdx
+        keyIdx = 0  # reset key index
+        print("\nNumber of Dst Keys: ", keyCount)
 
-    while keyIdx < keyCount:
-        keyAttribIdx = 0
+        while keyIdx < keyCount:
+            keyAttribIdx = 0
 
-        print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribDst[keyIdx][0])
+            print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribDst[keyIdx][0])
 
-        for d in keyAttribDst[keyIdx][1]:
-            if str(d.attribute_name) == "Name":
-                # d.attribute_value = str(d.attribute_value) + "_V2"
-                C_Name = str(d.attribute_value)
-                print(" C_Name: :", C_Name)
-            elif str(d.attribute_name) == "Cryptographic Usage Mask":
+            for d in keyAttribDst[keyIdx][1]:
+                if str(d.attribute_name) == "Name":
+                    # d.attribute_value = str(d.attribute_value) + "_V2"
+                    C_Name = str(d.attribute_value)
+                    print(" C_Name: :", C_Name)
+                elif str(d.attribute_name) == "Cryptographic Usage Mask":
 
-                # Magic method for deconstructing usage mask...
-                L_UsageMask = []
+                    # Magic method for deconstructing usage mask...
+                    L_UsageMask = []
 
-                # Determine the length of the numeration for all possible usage masks and
-                # then create a value with a ONE in the MSB (everything else are ZEROs).
-                # This value is called m_bit.
-                # Once it is created, apply it to the mask attribute value using AND)
-                # and determine if a bit is present in each of the positions of the mask, right-shift bit,
-                # and repeat.  If a bit is present in any location in the mask attribute valuye,
-                # then add that
-                # usage mask to the variable L_UsageMask.  Once you have iterated across
-                # all bit positions in the mask,
-                # then convert the list of cryptographic usage methods (L_UsageMask)
-                # to a tuple for association
-                # with the key.  Whew!
+                    # Determine the length of the numeration for all possible usage masks and
+                    # then create a value with a ONE in the MSB (everything else are ZEROs).
+                    # This value is called m_bit.
+                    # Once it is created, apply it to the mask attribute value using AND)
+                    # and determine if a bit is present in each of the positions of the mask, right-shift bit,
+                    # and repeat.  If a bit is present in any location in the mask attribute valuye,
+                    # then add that
+                    # usage mask to the variable L_UsageMask.  Once you have iterated across
+                    # all bit positions in the mask,
+                    # then convert the list of cryptographic usage methods (L_UsageMask)
+                    # to a tuple for association
+                    # with the key.  Whew!
 
-                bitLen = len(enums.CryptographicUsageMask)
-                m_bit = 2 ** (bitLen)
-                for bb in range(bitLen):
-                    bit_test = m_bit & d.attribute_value.value
-                    if bit_test > 0:
-                        L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
-                    m_bit = m_bit >> 1
-                C_UsageMask = tuple(L_UsageMask)
+                    bitLen = len(enums.CryptographicUsageMask)
+                    m_bit = 2 ** (bitLen)
+                    for bb in range(bitLen):
+                        bit_test = m_bit & d.attribute_value.value
+                        if bit_test > 0:
+                            L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
+                        m_bit = m_bit >> 1
+                    C_UsageMask = tuple(L_UsageMask)
 
-            elif str(d.attribute_name) == "Cryptographic Length":
-                pass
-            elif str(d.attribute_name) == "Cryptographic Algorithm":
-                pass
-            elif str(d.attribute_name) == "State":
-                pass
-            elif str(d.attribute_name) == "Operation Policy Name":
-                pass
-            elif str(d.attribute_name) == "Object Type":
-                pass
-            else:
-                d.attribute_value = None
+                elif str(d.attribute_name) == "Cryptographic Length":
+                    pass
+                elif str(d.attribute_name) == "Cryptographic Algorithm":
+                    pass
+                elif str(d.attribute_name) == "State":
+                    pass
+                elif str(d.attribute_name) == "Operation Policy Name":
+                    pass
+                elif str(d.attribute_name) == "Object Type":
+                    pass
+                else:
+                    d.attribute_value = None
 
-            keyAttribIdx = keyAttribIdx + 1
+                keyAttribIdx = keyAttribIdx + 1
 
-        # now push the keys to the destination KMIP key server
+            # now push the keys to the destination KMIP key server
 
-        tmpStr = str(keyValueDst[keyIdx])
-        hexKey = bytes.fromhex(tmpStr[2:-1])
+            tmpStr = str(keyValueDst[keyIdx])
+            hexKey = bytes.fromhex(tmpStr[2:-1])
 
-        symmetric_key = objects.SymmetricKey(
-            enums.CryptographicAlgorithm.AES, 256, hexKey, C_UsageMask, C_Name
-        )
+            symmetric_key = objects.SymmetricKey(
+                enums.CryptographicAlgorithm.AES, 256, hexKey, C_UsageMask, C_Name
+            )
 
-        # Upload the key, register the key, and activcate the key.
+            # Upload the key, register the key, and activcate the key.
+            try:
+                kid = keyDest.register(symmetric_key)
+                keyDest.activate(kid)
+
+            except IOError as e:
+                print("\n *** Destination IO Error *** \n")
+                print(e)
+                exit()
+
+            except ValueError as e:
+                print("\n *** Destination Value Error *** \n")
+                print(e)
+                exit()
+
+            except EOFError as e:
+                print("\n *** Destination EOF Error *** ->  Is host available? \n")
+                print(e)
+                exit()
+
+            except:
+                print("\n *** Unknown Error with Destination - possible key duplication *** \n")
+                # exit()   
+
+    #        except:
+    #            print(
+    #                " ... Key Registration and Activation Error - Check to ensure key does not already exist"
+    #            )
+
+            keyIdx = keyIdx + 1
+except:
+    print("\n *** DESTINATION SERVER NOT READY ***")
+    exit()
+    
+print("\n ---- key check  ---- ")
+
+try:
+    with keyDest:
+        keyIdx = 0  # reset key index
+
         try:
-            kid = keyDest.register(symmetric_key)
-            keyDest.activate(kid)
+            listOfDstKeys = keyDest.locate()
 
         except IOError as e:
             print("\n *** Destination IO Error *** \n")
@@ -313,93 +356,62 @@ with keyDest:
             exit()
 
         except:
-            print("\n *** Unknown Error with Destination - possible key duplication *** \n")
-            # exit()   
-            
-#        except:
-#            print(
-#                " ... Key Registration and Activation Error - Check to ensure key does not already exist"
-#            )
+            print("\n *** Unknown Error with Destination *** \n")
+            # exit()    
 
-        keyIdx = keyIdx + 1
 
-print("\n ---- key check  ---- ")
+        # The first 'tuple object is just a LIST of key IDs.
+        # However, the second object is a nested tubple of THREE key-valuye pairs
+        # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
+        # You can print(a) below to see a complete list of this information (keys and values)
 
-with keyDest:
-    keyIdx = 0  # reset key index
-    
-    try:
-        listOfDstKeys = keyDest.locate()
-        
-    except IOError as e:
-        print("\n *** Destination IO Error *** \n")
-        print(e)
-        exit()
+        keyCount = len(listOfDstKeys)
+        print("\nNumber of Destination Keys: ", keyCount)
 
-    except ValueError as e:
-        print("\n *** Destination Value Error *** \n")
-        print(e)
-        exit()
+        for keyDstID in listOfDstKeys:
+            try:
+                keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
 
-    except EOFError as e:
-        print("\n *** Destination EOF Error *** ->  Is host available? \n")
-        print(e)
-        exit()
+                keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID))
 
-    except:
-        print("\n *** Unknown Error with Destination *** \n")
-        # exit()    
-        
-
-    # The first 'tuple object is just a LIST of key IDs.
-    # However, the second object is a nested tubple of THREE key-valuye pairs
-    # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
-    # You can print(a) below to see a complete list of this information (keys and values)
-
-    keyCount = len(listOfDstKeys)
-    print("\nNumber of Destination Keys: ", keyCount)
-
-    for keyDstID in listOfDstKeys:
-        try:
-            keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
-
-            keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID))
-
-            tmpStr = str(keyValueDst[keyIdx])
-            hexKey = hex(int("0x" + tmpStr[2:-1], 0))
-
-            print(
-                "\nkeyIdx: ",
-                keyIdx,
-                "\n  keyDstID: ",
-                keyDstID,
-                "\n  keyValueDst[keyIdx]: ",
-                hexKey,
-            )
-
-            keyAttribIdx = 0
-            for a in keyAttribDst[keyIdx][1]:
-
-                # Get a more readable format of the digest
-                if str(a.attribute_name) == "Digest":
-                    a_value = a.attribute_value.digest_value.value.hex()
-                else:
-                    a_value = a.attribute_value
+                tmpStr = str(keyValueDst[keyIdx])
+                hexKey = hex(int("0x" + tmpStr[2:-1], 0))
 
                 print(
-                    "keyIdx: ",
+                    "\nkeyIdx: ",
                     keyIdx,
-                    "keyAttribIdx: ",
-                    keyAttribIdx,
-                    a.attribute_name,
-                    ": ",
-                    a_value,
+                    "\n  keyDstID: ",
+                    keyDstID,
+                    "\n  keyValueDst[keyIdx]: ",
+                    hexKey,
                 )
-                keyAttribIdx = keyAttribIdx + 1
 
-            keyIdx = keyIdx + 1
+                keyAttribIdx = 0
+                for a in keyAttribDst[keyIdx][1]:
 
-        except:
-            print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
+                    # Get a more readable format of the digest
+                    if str(a.attribute_name) == "Digest":
+                        a_value = a.attribute_value.digest_value.value.hex()
+                    else:
+                        a_value = a.attribute_value
 
+                    print(
+                        "keyIdx: ",
+                        keyIdx,
+                        "keyAttribIdx: ",
+                        keyAttribIdx,
+                        a.attribute_name,
+                        ": ",
+                        a_value,
+                    )
+                    keyAttribIdx = keyAttribIdx + 1
+
+                keyIdx = keyIdx + 1
+
+            except:
+                print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
+except:
+    print("\n *** DESTINATION SERVER NOT READY ***")
+    exit()
+    
 print("\n --- COMPLETE --- ")
