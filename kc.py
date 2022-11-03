@@ -148,8 +148,29 @@ print("\n ---- Copy Keys from Source Key Server ---- ")
 
 with keySource:
     keyIdx = 0  # reset key index
-    # 	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
-    listOfSrcKeys = keySource.locate()
+    
+    try:
+        # 	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
+        listOfSrcKeys = keySource.locate()
+        
+    except IOError as e:
+        print("\n *** Source IO Error *** \n")
+        print(e)
+        exit()
+        
+    except ValueError as e:
+        print("\n *** Source Value Error *** \n")
+        print(e)
+        exit()
+        
+    except EOFError as e:
+        print("\n *** Source EOF Error *** ->  Is host available? \n")
+        print(e)
+        exit()
+        
+    except:
+        print("\n *** Unknown Error with Source *** \n")
+        # exit()        
 
     # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-value pairs
     # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
@@ -276,10 +297,29 @@ with keyDest:
             kid = keyDest.register(symmetric_key)
             keyDest.activate(kid)
 
+        except IOError as e:
+            print("\n *** Destination IO Error *** \n")
+            print(e)
+            exit()
+
+        except ValueError as e:
+            print("\n *** Destination Value Error *** \n")
+            print(e)
+            exit()
+
+        except EOFError as e:
+            print("\n *** Destination EOF Error *** ->  Is host available? \n")
+            print(e)
+            exit()
+
         except:
-            print(
-                " ... Key Registration and Activation Error - Check to ensure key does not already exist"
-            )
+            print("\n *** Unknown Error with Destination - possible key duplication *** \n")
+            # exit()   
+            
+#        except:
+#            print(
+#                " ... Key Registration and Activation Error - Check to ensure key does not already exist"
+#            )
 
         keyIdx = keyIdx + 1
 
@@ -287,7 +327,29 @@ print("\n ---- key check  ---- ")
 
 with keyDest:
     keyIdx = 0  # reset key index
-    listOfDstKeys = keyDest.locate()
+    
+    try:
+        listOfDstKeys = keyDest.locate()
+        
+    except IOError as e:
+        print("\n *** Destination IO Error *** \n")
+        print(e)
+        exit()
+
+    except ValueError as e:
+        print("\n *** Destination Value Error *** \n")
+        print(e)
+        exit()
+
+    except EOFError as e:
+        print("\n *** Destination EOF Error *** ->  Is host available? \n")
+        print(e)
+        exit()
+
+    except:
+        print("\n *** Unknown Error with Destination *** \n")
+        # exit()    
+        
 
     # The first 'tuple object is just a LIST of key IDs.
     # However, the second object is a nested tubple of THREE key-valuye pairs
