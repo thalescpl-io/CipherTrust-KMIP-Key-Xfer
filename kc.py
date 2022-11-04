@@ -283,6 +283,9 @@ try:
                     pass
                 elif str(d.attribute_name) == "Object Type":
                     pass
+                elif str(d.attribute_name) == "Unique Identifier":
+                    # print(" .....UI:", str(d.attribute_value))
+                    pass
                 else:
                     d.attribute_value = None
 
