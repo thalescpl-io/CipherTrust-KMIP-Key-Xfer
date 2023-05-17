@@ -11,3 +11,7 @@ kc.bat and kc.sh have also been created to simplify execution of the application
 usage: kc.py [-h] -srcHost SRCHOST [-srcPort SRCPORT] -srcUser SRCUSER -srcPass SRCPASS 
                   -dstHost DSTHOST [-dstPort DSTPORT] -dstUser DSTUSER -dstPass DSTPASS 
                   -clientCert CLIENTCERT -clientKey CLIENTKEY -trustedCAs TRUSTEDCAS
+                  
+                  
+Note:  To clone this repository, login to GIT from your GIT client, then issue the followint command:
+$ git clone https://github.com/RickT256/KMIP-Client
