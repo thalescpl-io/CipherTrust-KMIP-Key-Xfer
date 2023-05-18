@@ -1,12 +1,14 @@
-########################################################################
+#####################################################################################
 #
 # 	Name: kc.py
 # 	Author: Rick R
 # 	Purpose:  Python-based KMIP client to reading key attributes
 #
-#   Usage: py kc.py -srcHost <hostname or IP> -srcUser <username> -srcPass <password> -dstHost <hostname or IP> -dstUser <username> -dstPass <password>
+#   Usage: py kc.py -srcHost <hostname or IP> -srcUser <username> -srcPass <password> 
+#                   -dstHost <hostname or IP> -dstUser <username> -dstPass <password> 
+#                   -clientCert CLIENTCERT -clientKey CLIENTKEY -trustedCAs TRUSTEDCAS
 #
-########################################################################
+#####################################################################################
 
 import os.path, pkgutil
 import ssl
@@ -20,8 +22,8 @@ import codecs
 import hashlib
 import argparse
 
-# ---------------- Functions -------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------------
+# ---------------- Functions-----------------------------------------------------
+# -------------------------------------------------------------------------------
 def makeHexStr(t_val):
 
     tmpStr = str(t_val)
@@ -30,11 +32,11 @@ def makeHexStr(t_val):
     return t_hexStr
 
 
-# ---------------- End of Functions -------------------------------------------------------------
+# ---------------- End of Functions ----------------------------------------------
 
 DEFAULT_KMIP_PORT = ["5696"]  # must be a list
 
-# ----- Input Parsing ---------------------------------------------------------------------------
+# ----- Input Parsing ------------------------------------------------------------
 
 # Parse command.  Note that if the arguments are not complete, a usage message will be printed
 # automatically
@@ -88,7 +90,7 @@ print("Source: ", t_srcHost, t_srcPort, t_srcUser)
 print("  Dest: ", t_dstHost, t_dstPort, t_dstUser)
 print("Client: ", t_clientCert, t_clientKey, t_trustedCAs)
 
-# ---- Parsing Complete -------------------------------------------------------------------------
+# ---- Parsing Complete ----------------------------------------------------------
 
 # Specify key source KMIP Server and attributes
 keySource = client.ProxyKmipClient(
@@ -254,15 +256,16 @@ try:
                     # Determine the length of the numeration for all possible usage masks and
                     # then create a value with a ONE in the MSB (everything else are ZEROs).
                     # This value is called m_bit.
+                    #
                     # Once it is created, apply it to the mask attribute value using AND)
                     # and determine if a bit is present in each of the positions of the mask, right-shift bit,
                     # and repeat.  If a bit is present in any location in the mask attribute valuye,
-                    # then add that
-                    # usage mask to the variable L_UsageMask.  Once you have iterated across
-                    # all bit positions in the mask,
+                    # then add that usage mask to the variable L_UsageMask.  
+                    # Once you have iterated across all bit positions in the mask,
                     # then convert the list of cryptographic usage methods (L_UsageMask)
-                    # to a tuple for association
-                    # with the key.  Whew!
+                    # to a tuple for association with the key.  
+                    # 
+                    # Whew!
 
                     bitLen = len(enums.CryptographicUsageMask)
                     m_bit = 2 ** (bitLen)
