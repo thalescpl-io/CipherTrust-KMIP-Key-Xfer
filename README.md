@@ -18,4 +18,6 @@ a) The pem file that contains the list of CAs that the application needs to trus
  - For Windows, the concatination command is:  **copy /b T_CA\*.pem TrustedCAs.pem**
  - For Linux, the concatination command is: **cp T_CA\*.pem TrustedCAs.pem**
 
-
+b) The distination user (DSTUSR) musts be a member of the KEY USERS administrative group. 
+c) The source user (SRCUSR) must be the OWNER of the KMIP keys that are to be exported
+d) The keys that are to be exported via the KMIP interface from the source host (SRCHOST) must be EXPORTABLE (check flag)
