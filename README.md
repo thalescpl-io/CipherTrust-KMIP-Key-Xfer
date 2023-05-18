@@ -8,14 +8,14 @@ All other files are supporting files (especially any .crt, .pem, or .key files)
 
 kc.bat and kc.sh have also been created to simplify execution of the application and include all of the paramters.
 
-usage: kc.py [-h] -srcHost SRCHOST [-srcPort SRCPORT] -srcUser SRCUSER -srcPass SRCPASS 
+usage: **kc.py [-h] -srcHost SRCHOST [-srcPort SRCPORT] -srcUser SRCUSER -srcPass SRCPASS 
                   -dstHost DSTHOST [-dstPort DSTPORT] -dstUser DSTUSER -dstPass DSTPASS 
-                  -clientCert CLIENTCERT -clientKey CLIENTKEY -trustedCAs TRUSTEDCAS
+                  -clientCert CLIENTCERT -clientKey CLIENTKEY -trustedCAs TRUSTEDCAS**
                   
                   
 Notes:  
 a) The pem file that contains the list of CAs that the application needs to trust is provide by the TRIUSTEDCAS file.  However, the CAs that need to be trusted can vary on a deployment by deploymet basis especially since the default CA for CipherTrust is unique to each instance of CipherTrust.  As such, I recommend downloading all CAs at the party (for the source and destination KMIP servers) into the same folder as kc.py and then concatenating them into a single file.  In the repository, I provide a number of CAs that I have used in testing and labled them "T_CAx.pem" where "x" is a number nad then I concat all of those file into the file called "TrustedCAs.pem"
- - For Windows, the concatination command is:  copy /b T_CA*.pem TrustedCAs.pem
- - For Linux, the concatination command is: cp T_CA*.pem TrustedCAs.pem
+ - For Windows, the concatination command is:  **copy /b T_CA*.pem TrustedCAs.pem**
+ - For Linux, the concatination command is: **cp T_CA*.pem TrustedCAs.pem**
 
 
