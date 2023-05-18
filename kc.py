@@ -127,20 +127,20 @@ keyDest = client.ProxyKmipClient(
 
 # You need an attributes class defined for later use - location of existing keys
 f = attributes.AttributeFactory()
-keyAttribs = f.create_attribute(
-    enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY
-)
+keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY)
+#keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY, enums.AttributeType.UNIQUE_IDENTIFIER)
 
 name_index = 0  # To be confirmed below
 keyIdx = 0
 keyAttribIdx = 0
 keyCount = 0
-keyValueSrc = []  # list of keys
-keyAttribSrc = []  # list of key attributes
-listOfSrcKeys = []
-keyValueDst = []  # list of keys
-keyAttribDst = []  # list of key attributes
-listOfDstKeys = []
+keyValueSrc = []    # list of source key values
+keyAttribSrc = []   # list of source key attributes
+listOfSrcKeys = []  # list of source key identifiers
+keyValueDst = []    # list of destination key values
+keyAttribDst = []   # list of destination key attributes
+listOfDstKeys = []  # list of destination key identiers
+
 
 # Code for locating (READING) keys and associated attributes for user from KMIP server. It limits its search to those
 # attributes defined by the create_attributes object.
@@ -153,7 +153,7 @@ try:
         keyIdx = 0  # reset key index
 
         try:
-            # 	listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
+            # listOfSrcKeys = keySource.locate(attributes=[keyAttribs])
             listOfSrcKeys = keySource.locate()
 
         except IOError as e:
@@ -167,7 +167,7 @@ try:
             exit()
 
         except EOFError as e:
-            print("\n *** Source EOF Error *** ->  Is host available? \n")
+            print("\n *** Source EOF Error *** ->  Is host available? Is user a member of Key Users?\n")
             print(e)
             exit()
 
