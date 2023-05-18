@@ -22,3 +22,4 @@ b) The distination user (DSTUSR) musts be a member of the KEY USERS administrati
 c) The source user (SRCUSR) must be the OWNER of the KMIP keys that are to be exported
 d) The keys that are to be exported via the KMIP interface from the source host (SRCHOST) must be EXPORTABLE (check flag)
 e) The KMIP library comes from PYKMIP.  You can find their documentation here: https://pykmip.readthedocs.io/en/latest/client.html
+f) Opensource informaton for PyKMIP can be found here:  https://github.com/OpenKMIP/PyKMIP
