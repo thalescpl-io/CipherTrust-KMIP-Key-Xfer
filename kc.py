@@ -15,7 +15,7 @@ import ssl
 from kmip.pie.client import ProxyKmipClient, enums
 from kmip.pie import objects
 from kmip.pie import client
-from kmip import enums
+from kmip.core import enums
 from kmip.core.factories import attributes
 import binascii
 import codecs
@@ -96,8 +96,8 @@ print("Client: ", t_clientCert, t_clientKey, t_trustedCAs)
 keySource = client.ProxyKmipClient(
     hostname=t_srcHost,
     port=t_srcPort,
-    username=t_srcUser,
-    password=t_srcPass,
+    # username=t_srcUser,
+    # password=t_srcPass,
     cert=t_clientCert,
     key=t_clientKey,
     ca=t_trustedCAs,
@@ -147,7 +147,6 @@ listOfDstKeys = []  # list of destination key identiers
 # This call initiates connection with KMIP server
 
 print("\n ---- Copy Keys from Source Key Server ---- ")
-
 try:
     with keySource:
         keyIdx = 0  # reset key index
@@ -171,12 +170,18 @@ try:
             print(e)
             exit()
 
-        except:
+        except Exception as e:
             print("\n *** Unknown Error with Source *** \n")
+            print(e)
             # exit()        
 
-        # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tubple of THREE key-value pairs
+        # The first 'tuple object is just a LIST of key IDs.  However, the second object is a nested tuple of THREE key-value pairs
         # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
+        
+        # Note that there is an issue with PyKMIP.  If the attribute call below throws an error like 
+        # 'Unrecognized attribute type: AttributeType.ORIGINAL_CREATION_DATE' then refer to this note:
+        # https://github.com/OpenKMIP/PyKMIP/issues/628
+        
 
         keyCount = len(listOfSrcKeys)
         print("\nNumber of Src Keys: ", keyCount)
@@ -185,7 +190,7 @@ try:
             try:
                 keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
                 keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
-
+    
                 keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
                 keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
 
@@ -222,11 +227,13 @@ try:
 
                 keyIdx = keyIdx + 1
 
-            except:
+            except Exception as e:
                 print("\n KeySrcID: ", keySrcID, "\n  KEY READ ERROR - Value and Atribute")
+                print("  ", e)
 
-except:
+except Exception as e:
     print("\n *** SOURCE SERVER NOT READY ***")
+    print(e)
     exit()
 
 # Now make copies of the keys on the destination key server
@@ -333,8 +340,9 @@ try:
     #            )
 
             keyIdx = keyIdx + 1
-except:
+except Exception as e:
     print("\n *** DESTINATION SERVER NOT READY ***")
+    print(e)
     exit()
     
 print("\n ---- key check  ---- ")
