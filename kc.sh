@@ -5,9 +5,9 @@
 cp T_CA*.pem TrustedCAs.pem
 
 python3 kc.py \
--srcHost 192.168.1.184 \
--srcUser kmip_alice -srcPass Thales123! \
--dstHost 192.168.1.180 \
--dstUser kmip_charlie -dstPass Thales345! \
--clientCert kmip_client.crt -clientKey kmip_client.key \
+-srcHost 192.168.1.180 \
+-srcUser SKLMadmin -srcPass Thales_4567 \
+-dstHost 192.168.1.190 \
+-dstUser kmip_alice -dstPass Thales123! \
+-clientCert KMIP-Alice.crt -clientKey KMIP-Alice-key.pem \
 -trustedCAs TrustedCAs.pem
