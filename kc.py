@@ -15,12 +15,13 @@ import ssl
 from kmip.pie.client import ProxyKmipClient, enums
 from kmip.pie import objects
 from kmip.pie import client
-from kmip.core import enums
+from kmip import enums
 from kmip.core.factories import attributes
 import binascii
 import codecs
 import hashlib
 import argparse
+import struct
 
 # ---------------- Functions-----------------------------------------------------
 # -------------------------------------------------------------------------------
@@ -30,7 +31,6 @@ def makeHexStr(t_val):
     t_hexStr = hex(int("0x" + tmpStr[2:-1], 0))
 
     return t_hexStr
-
 
 # ---------------- End of Functions ----------------------------------------------
 
@@ -121,13 +121,14 @@ keyDest = client.ProxyKmipClient(
     ssl_version="PROTOCOL_TLSv1_2",
     config="client",
     config_file="pykmip.conf",
+    kmip_version=enums.KMIPVersion.KMIP_1_4
 )
 # Alternative method for specifying KMIP Server.  Uses pykmip.conf file from default location.
 # c = client.ProxyKmipClient()
 
 # You need an attributes class defined for later use - location of existing keys
-f = attributes.AttributeFactory()
-keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY)
+#f = attributes.AttributeFactory()
+#keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY)
 #keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY, enums.AttributeType.UNIQUE_IDENTIFIER)
 
 name_index = 0  # To be confirmed below
@@ -203,6 +204,7 @@ try:
                     keySrcID,
                     "\n  keyValueSrc[keyIdx]: ",
                     hexKey,
+                    keyValueSrc[keyIdx]
                 )
 
                 keyAttribIdx = 0
@@ -237,8 +239,27 @@ except Exception as e:
     exit()
 
 # Now make copies of the keys on the destination key server
+
 print("\n ---- Copy Keys to Destination Key Server ---- ")
 
+
+with keyDest:
+#    kid = keyDest.register(symmetric_key) # throwing errors
+
+    kid = keyDest.create(
+        enums.CryptographicAlgorithm.AES,
+        256,
+        operation_policy_name='default',
+        name='Holy Cow Test',
+        cryptographic_usage_mask=[
+            enums.CryptographicUsageMask.ENCRYPT,
+            enums.CryptographicUsageMask.DECRYPT
+        ]        
+    )
+    
+print("STOP")
+exit()
+    
 try:
     with keyDest:
         keyCount = keyIdx
@@ -294,25 +315,48 @@ try:
                 elif str(d.attribute_name) == "Object Type":
                     pass
                 elif str(d.attribute_name) == "Unique Identifier":
-                    # print(" .....UI:", str(d.attribute_value))
+                    C_UniqueID = str(d.attribute_value)
                     pass
                 else:
                     d.attribute_value = None
 
+                print(" d.attribute_name: ", d.attribute_name, " d.attribute_value:", d.attribute_value)
                 keyAttribIdx = keyAttribIdx + 1
 
-            # now push the keys to the destination KMIP key server
+            # now push the keys to the destination KMIP key list
 
             tmpStr = str(keyValueDst[keyIdx])
             hexKey = bytes.fromhex(tmpStr[2:-1])
 
+            # Create the Symmetric key to register with the desitnation KMIP server
+            print("OBJ: ", dir(objects.SymmetricKey))
+            
+            # Create Key with minimal information
             symmetric_key = objects.SymmetricKey(
-                enums.CryptographicAlgorithm.AES, 256, hexKey, C_UsageMask, C_Name
+                enums.CryptographicAlgorithm.AES, 
+                256, 
+                hexKey
             )
+            
+            # Add additional attributes to Symmetric Key
+            symmetric_key.unique_identifier = C_UniqueID
+            symmetric_key.cryptographic_usage_masks = C_UsageMask
+            
 
             # Upload the key, register the key, and activcate the key.
             try:
-                kid = keyDest.register(symmetric_key)
+                print("*** HERE ***")
+                print(dir(symmetric_key))
+                print(symmetric_key.cryptographic_algorithm)
+                print(symmetric_key.cryptographic_length)
+                print(symmetric_key.cryptographic_usage_masks)
+                print(symmetric_key.value)
+                print(symmetric_key.unique_identifier)
+                print(symmetric_key.names)
+                kid = keyDest.register(symmetric_key) # throwing errors
+                print("*** HERE 2 ***")
+                keyDest.get_attribute_list(kid)
+                keyDest.get_attributes(kid)
                 keyDest.activate(kid)
 
             except IOError as e:
@@ -330,14 +374,10 @@ try:
                 print(e)
                 exit()
 
-            except:
+            except Exception as e:
                 print("\n *** Unknown Error with Destination - possible key duplication *** \n")
-                # exit()   
-
-    #        except:
-    #            print(
-    #                " ... Key Registration and Activation Error - Check to ensure key does not already exist"
-    #            )
+                print(e)
+                exit()   
 
             keyIdx = keyIdx + 1
 except Exception as e:
@@ -345,13 +385,14 @@ except Exception as e:
     print(e)
     exit()
     
-print("\n ---- key check  ---- ")
 
+    print("\n ---- Key Check  ---- ")
 try:
     with keyDest:
         keyIdx = 0  # reset key index
 
         try:
+            # listOfDstKeys = keyDest.locate(attributes=[keyAttribs])
             listOfDstKeys = keyDest.locate()
 
         except IOError as e:
@@ -369,8 +410,9 @@ try:
             print(e)
             exit()
 
-        except:
+        except Exception as e:
             print("\n *** Unknown Error with Destination *** \n")
+            print(e)
             # exit()    
 
 
