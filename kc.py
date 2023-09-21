@@ -39,6 +39,27 @@ def makeByteStr(t_val):
     t_byteStr = bytes.fromhex(tmpStr[2:-1])
 
     return t_byteStr
+
+def printKeyMaterial(t_keyIdx, t_keyID, t_hexKey):
+    tmpstr = "\nkeyIdx: %s\n  keyID: %s\n  keyValue[keyIdx]: %s" %(t_keyIdx, t_keyID, t_hexKey)
+    print(tmpstr)
+
+def printKeyAttributes(t_keyAttrib):
+    keyAttribIdx = 0
+    for a in t_keyAttrib:
+
+        # Get a more readable format of the digest
+        if str(a.attribute_name) == "Digest":
+            a_value = a.attribute_value.digest_value.value.hex()
+        else:
+            a_value = a.attribute_value
+
+        # print attribute information
+        tmpstr = "   keyAttribIdx: %s %s: %s" %(keyAttribIdx, a.attribute_name, a_value)    
+        print(tmpstr)
+
+        keyAttribIdx = keyAttribIdx + 1
+
 # ---------------- End of Functions ----------------------------------------------
 
 DEFAULT_KMIP_PORT = ["5696"]  # must be a list
@@ -207,44 +228,21 @@ try:
 
         for keySrcID in listOfSrcKeys:
             try:
+                # Get key Material
                 keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
                 keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
     
+                # Get key attributes
                 keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
                 keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
 
+                # Print key information
                 hexKey = makeHexStr(keyValueSrc[keyIdx])
+                printKeyMaterial(keyIdx, keySrcID, hexKey)
 
-                print(
-                    "\nkeyIdx: ",
-                    keyIdx,
-                    "\n  keySrcID: ",
-                    keySrcID,
-                    "\n  keyValueSrc[keyIdx]: ",
-                    hexKey,
-                    keyValueSrc[keyIdx]
-                )
-
-                keyAttribIdx = 0
-                for a in keyAttribSrc[keyIdx][1]:
-
-                    # Get a more readable format of the digest
-                    if str(a.attribute_name) == "Digest":
-                        a_value = a.attribute_value.digest_value.value.hex()
-                    else:
-                        a_value = a.attribute_value
-
-                    print(
-                        "keyIdx: ",
-                        keyIdx,
-                        "keyAttribIdx: ",
-                        keyAttribIdx,
-                        a.attribute_name,
-                        ": ",
-                        a_value,
-                    )
-                    keyAttribIdx = keyAttribIdx + 1
-
+                # print attribute information
+                printKeyAttributes(keyAttribSrc[keyIdx][1])                
+                    
                 keyIdx = keyIdx + 1
 
             except Exception as e:
@@ -415,42 +413,17 @@ try:
         for keyDstID in listOfDstKeys:
             try:
                 
-                # Retrieve key ID information and key material
+                # Get key material and attributes
                 keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
                 keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID, LIST_OF_KEY_ATTRIBUTES))
 
-                # Get key and make it human readable
+                # Print key information
                 hexKey = makeHexStr(keyValueDst[keyIdx])
-
-                print(
-                    "\nkeyIdx: ",
-                    keyIdx,
-                    "\n  keyDstID: ",
-                    keyDstID,
-                    "\n  keyValueDst[keyIdx]: ",
-                    hexKey,
-                )
-
-                keyAttribIdx = 0
-                for a in keyAttribDst[keyIdx][1]:
-
-                    # Get a more readable format of the digest
-                    if str(a.attribute_name) == "Digest":
-                        a_value = a.attribute_value.digest_value.value.hex()
-                    else:
-                        a_value = a.attribute_value
-
-                    print(
-                        "keyIdx: ",
-                        keyIdx,
-                        "keyAttribIdx: ",
-                        keyAttribIdx,
-                        a.attribute_name,
-                        ": ",
-                        a_value,
-                    )
-                    keyAttribIdx = keyAttribIdx + 1
-
+                printKeyMaterial(keyIdx, keyDstID, hexKey)
+                
+                # print attribute information
+                printKeyAttributes(keyAttribDst[keyIdx][1])  
+                
                 keyIdx = keyIdx + 1
 
             except Exception as e:
