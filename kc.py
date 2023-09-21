@@ -2,9 +2,12 @@
 #
 # 	Name: kc.py
 # 	Author: Rick R
-# 	Purpose:  Python-based KMIP client to reading key attributes
+# 	Purpose: Python-based KMIP client to reading key attributes.  This variant
+#            focuses on GKLM to CM KMIP key migration.  GKLM only requires
+#            a client certificate for authentication, so the U/P has been removed
+#            for source authentication.
 #
-#   Usage: py kc.py -srcHost <hostname or IP> -srcUser <username> -srcPass <password> 
+#   Usage: py kc.py -srcHost <hostname or IP> 
 #                   -dstHost <hostname or IP> -dstUser <username> -dstPass <password> 
 #                   -clientCert CLIENTCERT -clientKey CLIENTKEY -trustedCAs TRUSTEDCAS
 #
@@ -86,8 +89,8 @@ parser.add_argument("-srcHost", nargs=1, action="store", dest="srcHost", require
 parser.add_argument(
     "-srcPort", nargs=1, action="store", dest="srcPort", default=DEFAULT_KMIP_PORT
 )
-parser.add_argument("-srcUser", nargs=1, action="store", dest="srcUser", required=True)
-parser.add_argument("-srcPass", nargs=1, action="store", dest="srcPass", required=True)
+# parser.add_argument("-srcUser", nargs=1, action="store", dest="srcUser", required=True)
+# parser.add_argument("-srcPass", nargs=1, action="store", dest="srcPass", required=True)
 
 # Destination Information
 parser.add_argument("-dstHost", nargs=1, action="store", dest="dstHost", required=True)
@@ -112,8 +115,8 @@ args = parser.parse_args()
 
 t_srcHost = str(" ".join(args.srcHost))
 t_srcPort = str(" ".join(args.srcPort))
-t_srcUser = str(" ".join(args.srcUser))
-t_srcPass = str(" ".join(args.srcPass))
+# t_srcUser = str(" ".join(args.srcUser))
+# t_srcPass = str(" ".join(args.srcPass))
 
 t_dstHost = str(" ".join(args.dstHost))
 t_dstPort = str(" ".join(args.dstPort))
@@ -125,7 +128,7 @@ t_clientKey = str(" ".join(args.clientKey))
 t_trustedCAs = str(" ".join(args.trustedCAs))
 
 print("\n ---- INPUT STATS: ----")
-print("Source: ", t_srcHost, t_srcPort, t_srcUser)
+print("Source: ", t_srcHost, t_srcPort )
 print("  Dest: ", t_dstHost, t_dstPort, t_dstUser)
 print("Client: ", t_clientCert, t_clientKey, t_trustedCAs)
 
