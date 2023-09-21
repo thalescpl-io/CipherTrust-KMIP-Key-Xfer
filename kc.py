@@ -22,6 +22,7 @@ import codecs
 import hashlib
 import argparse
 import struct
+import inspect
 
 # ---------------- Functions-----------------------------------------------------
 # -------------------------------------------------------------------------------
@@ -32,9 +33,26 @@ def makeHexStr(t_val):
 
     return t_hexStr
 
+def makeByteStr(t_val):
+
+    tmpStr = str(t_val)
+    t_byteStr = bytes.fromhex(tmpStr[2:-1])
+
+    return t_byteStr
 # ---------------- End of Functions ----------------------------------------------
 
 DEFAULT_KMIP_PORT = ["5696"]  # must be a list
+
+LIST_OF_KEY_ATTRIBUTES = [
+    enums.AttributeType.UNIQUE_IDENTIFIER.value,
+    enums.AttributeType.NAME.value, 
+    enums.AttributeType.CRYPTOGRAPHIC_ALGORITHM.value, 
+    enums.AttributeType.CRYPTOGRAPHIC_LENGTH.value,
+    enums.AttributeType.CRYPTOGRAPHIC_USAGE_MASK.value,
+    enums.AttributeType.OBJECT_TYPE.value,
+    enums.AttributeType.STATE.value,
+    enums.AttributeType.DIGEST.value
+]
 
 # ----- Input Parsing ------------------------------------------------------------
 
@@ -127,8 +145,8 @@ keyDest = client.ProxyKmipClient(
 # c = client.ProxyKmipClient()
 
 # You need an attributes class defined for later use - location of existing keys
-#f = attributes.AttributeFactory()
-#keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY)
+f = attributes.AttributeFactory()
+keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY)
 #keyAttribs = f.create_attribute(enums.AttributeType.OBJECT_TYPE, enums.ObjectType.SYMMETRIC_KEY, enums.AttributeType.UNIQUE_IDENTIFIER)
 
 name_index = 0  # To be confirmed below
@@ -242,24 +260,6 @@ except Exception as e:
 
 print("\n ---- Copy Keys to Destination Key Server ---- ")
 
-
-with keyDest:
-#    kid = keyDest.register(symmetric_key) # throwing errors
-
-    kid = keyDest.create(
-        enums.CryptographicAlgorithm.AES,
-        256,
-        operation_policy_name='default',
-        name='Holy Cow Test',
-        cryptographic_usage_mask=[
-            enums.CryptographicUsageMask.ENCRYPT,
-            enums.CryptographicUsageMask.DECRYPT
-        ]        
-    )
-    
-print("STOP")
-exit()
-    
 try:
     with keyDest:
         keyCount = keyIdx
@@ -273,9 +273,9 @@ try:
 
             for d in keyAttribDst[keyIdx][1]:
                 if str(d.attribute_name) == "Name":
-                    # d.attribute_value = str(d.attribute_value) + "_V2"
                     C_Name = str(d.attribute_value)
-                    print(" C_Name: :", C_Name)
+                    print(" C_Name:", C_Name)
+                    
                 elif str(d.attribute_name) == "Cryptographic Usage Mask":
 
                     # Magic method for deconstructing usage mask...
@@ -320,44 +320,31 @@ try:
                 else:
                     d.attribute_value = None
 
-                print(" d.attribute_name: ", d.attribute_name, " d.attribute_value:", d.attribute_value)
                 keyAttribIdx = keyAttribIdx + 1
 
             # now push the keys to the destination KMIP key list
-
-            tmpStr = str(keyValueDst[keyIdx])
-            hexKey = bytes.fromhex(tmpStr[2:-1])
-
-            # Create the Symmetric key to register with the desitnation KMIP server
-            print("OBJ: ", dir(objects.SymmetricKey))
+            byteKey = makeByteStr(keyValueDst[keyIdx])
             
             # Create Key with minimal information
             symmetric_key = objects.SymmetricKey(
                 enums.CryptographicAlgorithm.AES, 
                 256, 
-                hexKey
+                byteKey
             )
             
             # Add additional attributes to Symmetric Key
             symmetric_key.unique_identifier = C_UniqueID
             symmetric_key.cryptographic_usage_masks = C_UsageMask
+            symmetric_key.names[0] = C_Name
+            symmetric_key.extractable = True
+            symmetric_key.never_extractable = False
             
-
             # Upload the key, register the key, and activcate the key.
             try:
-                print("*** HERE ***")
-                print(dir(symmetric_key))
-                print(symmetric_key.cryptographic_algorithm)
-                print(symmetric_key.cryptographic_length)
-                print(symmetric_key.cryptographic_usage_masks)
-                print(symmetric_key.value)
-                print(symmetric_key.unique_identifier)
-                print(symmetric_key.names)
-                kid = keyDest.register(symmetric_key) # throwing errors
-                print("*** HERE 2 ***")
-                keyDest.get_attribute_list(kid)
-                keyDest.get_attributes(kid)
+                kid = keyDest.register(symmetric_key)
+                print("---- registered: ", C_Name)
                 keyDest.activate(kid)
+                print("----  activated: ", kid)
 
             except IOError as e:
                 print("\n *** Destination IO Error *** \n")
@@ -377,16 +364,18 @@ try:
             except Exception as e:
                 print("\n *** Unknown Error with Destination - possible key duplication *** \n")
                 print(e)
-                exit()   
 
             keyIdx = keyIdx + 1
 except Exception as e:
     print("\n *** DESTINATION SERVER NOT READY ***")
     print(e)
     exit()
-    
 
-    print("\n ---- Key Check  ---- ")
+##############################
+# Now, let's got read from the destination server what keys it has
+##############################
+print("\n ---- Key Check  ---- ")
+
 try:
     with keyDest:
         keyIdx = 0  # reset key index
@@ -415,7 +404,6 @@ try:
             print(e)
             # exit()    
 
-
         # The first 'tuple object is just a LIST of key IDs.
         # However, the second object is a nested tubple of THREE key-valuye pairs
         # consisting of attribute_name, attribute_index, attribute_value, and attribute_value.
@@ -426,12 +414,13 @@ try:
 
         for keyDstID in listOfDstKeys:
             try:
+                
+                # Retrieve key ID information and key material
                 keyValueDst.insert(keyIdx, keyDest.get(keyDstID))
+                keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID, LIST_OF_KEY_ATTRIBUTES))
 
-                keyAttribDst.insert(keyIdx, keyDest.get_attributes(keyDstID))
-
-                tmpStr = str(keyValueDst[keyIdx])
-                hexKey = hex(int("0x" + tmpStr[2:-1], 0))
+                # Get key and make it human readable
+                hexKey = makeHexStr(keyValueDst[keyIdx])
 
                 print(
                     "\nkeyIdx: ",
@@ -464,10 +453,14 @@ try:
 
                 keyIdx = keyIdx + 1
 
-            except:
-                print("\n KeyDstID: ", keyDstID, "\n  KEY READ ERROR - Value and Atribute")
-except:
+            except Exception as e:
+                print("\n  KEY READ ERROR - Value and Atribute --> ", e)
+                print("   keyIdx: ", keyIdx, "   keyDstID: ", keyDstID)    
+                exit()
+                
+except Exception as e:
     print("\n *** DESTINATION SERVER NOT READY ***")
+    print(e)
     exit()
     
 print("\n --- COMPLETE --- ")
