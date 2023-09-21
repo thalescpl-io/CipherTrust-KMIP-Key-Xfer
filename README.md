@@ -20,14 +20,12 @@ a) The pem file that contains the list of CAs that the application needs to trus
 
 b) The distination user (DSTUSR) musts be a member of the KEY USERS administrative group. 
 
-c) The source user (SRCUSR) must be the OWNER of the KMIP keys that are to be exported.  This branch of the code assumes the source is GKLM and has been customized accordingly.
+c) The source user (SRCUSR) must be the OWNER of the KMIP keys or a member of a Client Group in order to export the KMIP keys.  This branch of the code assumes the source is GKLM and has been customized accordingly.
 
-d) The keys that are to be exported via the KMIP interface from the source host (SRCHOST) must be EXPORTABLE (check flag)
+d) The KMIP library comes from PYKMIP.  You can find their documentation here: https://pykmip.readthedocs.io/en/latest/client.html
 
-e) The KMIP library comes from PYKMIP.  You can find their documentation here: https://pykmip.readthedocs.io/en/latest/client.html
+e) Opensource informaton for PyKMIP can be found here:  https://github.com/OpenKMIP/PyKMIP
 
-f) Opensource informaton for PyKMIP can be found here:  https://github.com/OpenKMIP/PyKMIP
-
-g) In some instances, you may get an error pertaining to ORIGINAL_CREATION_DATE.  The solution to this is found in the following link and will require the user to edit their own attribute_values.py file which is part of the pykmip package (a dependency of this code).  https://github.com/OpenKMIP/PyKMIP/issues/628
+f) In some instances, you may get an error pertaining to ORIGINAL_CREATION_DATE.  The solution to this is found in the following link and will require the user to edit their own attribute_values.py file which is part of the pykmip package (a dependency of this code).  https://github.com/OpenKMIP/PyKMIP/issues/628
 
 **DISCLAIMER**:  Private keys provided in this repository *should be considered compromised.* They are included for *demonstration and educational purposes only* and should *NOT* be used in a production environment.
