@@ -242,6 +242,10 @@ try:
             keyAttribIdx = 0
 
             print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribDst[keyIdx][0])
+            
+            # By default, make key name the same as the keyID, unless otherwised changed below
+            # by the specific Name Attribute            
+            C_Name = keyAttribDst[keyIdx][0]
 
             for d in keyAttribDst[keyIdx][1]:
                 if str(d.attribute_name) == "Name":
