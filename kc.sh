@@ -2,7 +2,7 @@
 #
 # Script for executing kc.by on Linux
 #
-cp T_CA*.pem TrustedCAs.pem
+cat T_CA*.pem > TrustedCAs.pem
 
 python3 kc.py \
 -srcHost 192.168.1.180 \

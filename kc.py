@@ -233,11 +233,11 @@ try:
             try:
                 # Get key Material
                 keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
-                keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
+                #keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
     
                 # Get key attributes
                 keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
-                keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
+                #keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
 
                 # Print key information
                 hexKey = makeHexStr(keyValueSrc[keyIdx])
@@ -270,13 +270,18 @@ try:
         while keyIdx < keyCount:
             keyAttribIdx = 0
 
-            print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribDst[keyIdx][0])
+            print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribSrc[keyIdx][0])
+            
+            # By default, make key name the same as the keyID, unless otherwised changed below
+            # by the specific Name Attribute            
+            C_Name = keyAttribSrc[keyIdx][0]
+            C_Length = 256
 
-            for d in keyAttribDst[keyIdx][1]:
+            for d in keyAttribSrc[keyIdx][1]:
                 if str(d.attribute_name) == "Name":
+                    # d.attribute_value = str(d.attribute_value) + "_V2"
                     C_Name = str(d.attribute_value)
-                    print(" C_Name:", C_Name)
-                    
+                    print(" C_Name: :", C_Name)
                 elif str(d.attribute_name) == "Cryptographic Usage Mask":
 
                     # Magic method for deconstructing usage mask...
@@ -306,46 +311,50 @@ try:
                     C_UsageMask = tuple(L_UsageMask)
 
                 elif str(d.attribute_name) == "Cryptographic Length":
-                    pass
-                elif str(d.attribute_name) == "Cryptographic Algorithm":
-                    pass
-                elif str(d.attribute_name) == "State":
-                    pass
-                elif str(d.attribute_name) == "Operation Policy Name":
-                    pass
-                elif str(d.attribute_name) == "Object Type":
-                    pass
+                    C_Length = d.attribute_value    # save key length for key creation
                 elif str(d.attribute_name) == "Unique Identifier":
-                    C_UniqueID = str(d.attribute_value)
-                    pass
+                    pass                            # Ignore keyID.  It will be replaced by the keyID when he key is registered
+                elif str(d.attribute_name) == "State":
+                    pass                            # Ignore State.  All keys will be Activated on Destination
+                
+#                elif str(d.attribute_name) == "Cryptographic Algorithm":
+#                    pass
+#                elif str(d.attribute_name) == "Operation Policy Name":
+#                    pass
+#                elif str(d.attribute_name) == "Object Type":
+#                    pass
+
+##                else:
+##                    d.attribute_value = None
                 else:
-                    d.attribute_value = None
+                    keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])
+                    keyAttribIdx = keyAttribIdx + 1
 
-                keyAttribIdx = keyAttribIdx + 1
+            # Now create the key in the destintion server then apply its attributes
 
-            # now push the keys to the destination KMIP key list
-            byteKey = makeByteStr(keyValueDst[keyIdx])
-            
-            # Create Key with minimal information
+            tmpStr = str(keyValueSrc[keyIdx])
+            hexKey = bytes.fromhex(tmpStr[2:-1])
+
             symmetric_key = objects.SymmetricKey(
-                enums.CryptographicAlgorithm.AES, 
-                256, 
-                byteKey
+                enums.CryptographicAlgorithm.AES, C_Length, hexKey, C_UsageMask, C_Name
             )
-            
-            # Add additional attributes to Symmetric Key
-            symmetric_key.unique_identifier = C_UniqueID
-            symmetric_key.cryptographic_usage_masks = C_UsageMask
-            symmetric_key.names[0] = C_Name
-            symmetric_key.extractable = True
-            symmetric_key.never_extractable = False
-            
+
             # Upload the key, register the key, and activcate the key.
             try:
+                # Register key and activate it
+                print("\n Registering and Activating Key")
                 kid = keyDest.register(symmetric_key)
-                print("---- registered: ", C_Name)
                 keyDest.activate(kid)
-                print("----  activated: ", kid)
+                
+                # Add attributes other than those specified when the symmetric_key was defined
+                print("\n Setting Attributes")
+                
+                for t_attrib in keyAttribSrc[keyIdx][1]:
+                    keyDest.set_attribute(
+                        unique_identifier=kid,
+                        attribute_name=t_attrib.attribute_name,
+                        attribute_value=t_attrib.attribute_value
+                    )
 
             except IOError as e:
                 print("\n *** Destination IO Error *** \n")
