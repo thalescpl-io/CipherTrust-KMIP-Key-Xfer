@@ -293,8 +293,8 @@ try:
                 elif str(d.attribute_name) == "Unique Identifier":
                     # print(" .....UI:", str(d.attribute_value))
                     pass
-                else:
-                    d.attribute_value = None
+#                else:
+#                    d.attribute_value = None
 
                 keyAttribIdx = keyAttribIdx + 1
 
