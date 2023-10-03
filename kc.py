@@ -13,41 +13,46 @@
 #
 #####################################################################################
 
-import os.path, pkgutil
-import ssl
-from kmip.pie.client import ProxyKmipClient, enums
-from kmip.pie import objects
-from kmip.pie import client
-from kmip import enums
-from kmip.core.factories import attributes
-import binascii
-import codecs
-import hashlib
-import argparse
-import struct
-import inspect
+import  os.path, pkgutil
+import  ssl
+from    kmip.pie.client import ProxyKmipClient, enums
+from    kmip.pie import objects
+from    kmip.pie import client
+from    kmip import enums
+from    kmip.core.factories import attributes
+import  binascii
+import  codecs
+import  hashlib
+import  argparse
+import  struct
+import  inspect
+from    kcenums import LIST_OF_KEY_ATTRIBUTES, DEFAULT_KMIP_PORT
 
 # ---------------- Functions-----------------------------------------------------
 # -------------------------------------------------------------------------------
 def makeHexStr(t_val):
-
     tmpStr = str(t_val)
     t_hexStr = hex(int("0x" + tmpStr[2:-1], 0))
 
     return t_hexStr
 
 def makeByteStr(t_val):
-
     tmpStr = str(t_val)
     t_byteStr = bytes.fromhex(tmpStr[2:-1])
 
     return t_byteStr
 
 def printKeyMaterial(t_keyIdx, t_keyID, t_hexKey):
+#
+# Gather key material and print it in a readable format
+#
     tmpstr = "\nkeyIdx: %s\n  keyID: %s\n  keyValue[keyIdx]: %s" %(t_keyIdx, t_keyID, t_hexKey)
     print(tmpstr)
 
 def printKeyAttributes(t_keyAttrib):
+#
+# Gather key attributes and print them in a readable format
+#
     keyAttribIdx = 0
     for a in t_keyAttrib:
 
@@ -63,20 +68,36 @@ def printKeyAttributes(t_keyAttrib):
 
         keyAttribIdx = keyAttribIdx + 1
 
+def ConvertCryptoUsageMask(t_attrib):
+# Magic method for deconstructing usage mask...
+    L_UsageMask = []
+
+    # Determine the length of the numeration for all possible usage masks and
+    # then create a value with a ONE in the MSB (everything else are ZEROs).
+    # This value is called m_bit.
+    #
+    # Once it is created, apply it to the mask attribute value using AND)
+    # and determine if a bit is present in each of the positions of the mask, right-shift bit,
+    # and repeat.  If a bit is present in any location in the mask attribute valuye,
+    # then add that usage mask to the variable L_UsageMask.  
+    # Once you have iterated across all bit positions in the mask,
+    # then convert the list of cryptographic usage methods (L_UsageMask)
+    # to a tuple for association with the key.  
+    # 
+    # Whew!
+
+    bitLen = len(enums.CryptographicUsageMask)
+    m_bit = 2 ** (bitLen)
+    for bb in range(bitLen):
+        bit_test = m_bit & t_attrib.attribute_value.value
+        if bit_test > 0:
+            L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
+        m_bit = m_bit >> 1
+    t_UsageMask = tuple(L_UsageMask)
+    
+    return t_UsageMask
+                    
 # ---------------- End of Functions ----------------------------------------------
-
-DEFAULT_KMIP_PORT = ["5696"]  # must be a list
-
-LIST_OF_KEY_ATTRIBUTES = [
-    enums.AttributeType.UNIQUE_IDENTIFIER.value,
-    enums.AttributeType.NAME.value, 
-    enums.AttributeType.CRYPTOGRAPHIC_ALGORITHM.value, 
-    enums.AttributeType.CRYPTOGRAPHIC_LENGTH.value,
-    enums.AttributeType.CRYPTOGRAPHIC_USAGE_MASK.value,
-    enums.AttributeType.OBJECT_TYPE.value,
-    enums.AttributeType.STATE.value,
-    enums.AttributeType.DIGEST.value
-]
 
 # ----- Input Parsing ------------------------------------------------------------
 
@@ -233,11 +254,11 @@ try:
             try:
                 # Get key Material
                 keyValueSrc.insert(keyIdx, keySource.get(keySrcID))
-                #keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
+                # keyValueDst.insert(keyIdx, keyValueSrc[keyIdx])  # make a copy
     
                 # Get key attributes
                 keyAttribSrc.insert(keyIdx, keySource.get_attributes(keySrcID))
-                #keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
+                # keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])  # make a copy
 
                 # Print key information
                 hexKey = makeHexStr(keyValueSrc[keyIdx])
@@ -269,69 +290,37 @@ try:
 
         while keyIdx < keyCount:
             keyAttribIdx = 0
-
-            print("\nkeyIdx: ", keyIdx, "\n keyID: ", keyAttribSrc[keyIdx][0])
+            print("\nkeyIdx: ", keyIdx)
             
             # By default, make key name the same as the keyID, unless otherwised changed below
             # by the specific Name Attribute            
             C_Name = keyAttribSrc[keyIdx][0]
             C_Length = 256
 
-            for d in keyAttribSrc[keyIdx][1]:
-                if str(d.attribute_name) == "Name":
-                    # d.attribute_value = str(d.attribute_value) + "_V2"
-                    C_Name = str(d.attribute_value)
-                    print(" C_Name: :", C_Name)
-                elif str(d.attribute_name) == "Cryptographic Usage Mask":
-
-                    # Magic method for deconstructing usage mask...
-                    L_UsageMask = []
-
-                    # Determine the length of the numeration for all possible usage masks and
-                    # then create a value with a ONE in the MSB (everything else are ZEROs).
-                    # This value is called m_bit.
-                    #
-                    # Once it is created, apply it to the mask attribute value using AND)
-                    # and determine if a bit is present in each of the positions of the mask, right-shift bit,
-                    # and repeat.  If a bit is present in any location in the mask attribute valuye,
-                    # then add that usage mask to the variable L_UsageMask.  
-                    # Once you have iterated across all bit positions in the mask,
-                    # then convert the list of cryptographic usage methods (L_UsageMask)
-                    # to a tuple for association with the key.  
-                    # 
-                    # Whew!
-
-                    bitLen = len(enums.CryptographicUsageMask)
-                    m_bit = 2 ** (bitLen)
-                    for bb in range(bitLen):
-                        bit_test = m_bit & d.attribute_value.value
-                        if bit_test > 0:
-                            L_UsageMask.append(enums.CryptographicUsageMask(bit_test))
-                        m_bit = m_bit >> 1
-                    C_UsageMask = tuple(L_UsageMask)
-
-                elif str(d.attribute_name) == "Cryptographic Length":
-                    C_Length = d.attribute_value    # save key length for key creation
-                elif str(d.attribute_name) == "Unique Identifier":
+            for s_attrib in keyAttribSrc[keyIdx][1]:
+                if str(s_attrib.attribute_name) == "Name":
+                    C_Name = str(s_attrib.attribute_value)
+                    print(" C_Name: :", C_Name)                    
+                elif str(s_attrib.attribute_name) == "Cryptographic Usage Mask":
+                    C_UsageMask = ConvertCryptoUsageMask(s_attrib)     # change Crypto Usage Mask to proper format
+                elif str(s_attrib.attribute_name) == "Cryptographic Length":
+                    C_Length = int(str(s_attrib.attribute_value))    # save key length for key creation
+                elif str(s_attrib.attribute_name) == "Unique Identifier":
                     pass                            # Ignore keyID.  It will be replaced by the keyID when he key is registered
-                elif str(d.attribute_name) == "State":
+                elif str(s_attrib.attribute_name) == "State":
                     pass                            # Ignore State.  All keys will be Activated on Destination
-                
 #                elif str(d.attribute_name) == "Cryptographic Algorithm":
 #                    pass
 #                elif str(d.attribute_name) == "Operation Policy Name":
 #                    pass
 #                elif str(d.attribute_name) == "Object Type":
 #                    pass
-
 ##                else:
 ##                    d.attribute_value = None
                 else:
-                    keyAttribDst.insert(keyIdx, keyAttribSrc[keyIdx])
                     keyAttribIdx = keyAttribIdx + 1
 
             # Now create the key in the destintion server then apply its attributes
-
             tmpStr = str(keyValueSrc[keyIdx])
             hexKey = bytes.fromhex(tmpStr[2:-1])
 
@@ -346,16 +335,9 @@ try:
                 kid = keyDest.register(symmetric_key)
                 keyDest.activate(kid)
                 
-                # Add attributes other than those specified when the symmetric_key was defined
-                print("\n Setting Attributes")
-                
-                for t_attrib in keyAttribSrc[keyIdx][1]:
-                    keyDest.set_attribute(
-                        unique_identifier=kid,
-                        attribute_name=t_attrib.attribute_name,
-                        attribute_value=t_attrib.attribute_value
-                    )
-
+                print(" --> Registration and Activation Successful!")
+                print("     kID:", kid)
+            
             except IOError as e:
                 print("\n *** Destination IO Error *** \n")
                 print(e)
@@ -376,6 +358,7 @@ try:
                 print(e)
 
             keyIdx = keyIdx + 1
+            
 except Exception as e:
     print("\n *** DESTINATION SERVER NOT READY ***")
     print(e)
